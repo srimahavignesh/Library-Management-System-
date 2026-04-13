@@ -182,5 +182,3 @@ This project is a great beginner-friendly implementation of a **real-world syste
 It strengthens understanding of **file handling, data structures, and system logic design**.
 
 ---
-
-⭐ If you like this project, consider giving it a star on GitHub!
