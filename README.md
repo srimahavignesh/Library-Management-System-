@@ -1,186 +1,495 @@
-# Library-Management-System-
-This project is a great beginner-friendly implementation of a real-world system using C programming. It strengthens understanding of file handling, data structures, and system logic design.
-# 📚 Library Management System in C
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-A **console-based Library Management System** developed using the C programming language.
-This project demonstrates **file handling, structures, and basic system design** concepts in C.
+// ---------------- STRUCTURES ----------------
+struct Book {
+    int id;
+    char name[50];
+    char author[50];
+    int available;
+};
 
----
+struct User {
+    int userId;
+    char name[50];
+    int issuedBookId;
+    int dueDate;
+};
 
-## 🎯 Project Overview
+// ---------------- FUNCTION DECLARATIONS ----------------
+int login();
+void addBook();
+void displayBooks();
+void searchBook();
+void deleteBook();
 
-This system helps manage a small library by allowing administrators and students to perform essential operations like:
+void addUser();
+void displayUsers();
+void deleteUser();
 
-* Managing books 📖
-* Managing users 👥
-* Issuing and returning books 🔄
-* Tracking due dates ⏳
+void issueBook();
+void returnBook();
 
-All data is stored using **binary files**, making the system persistent even after program exit.
+// ---------------- LOGIN ----------------
+int login() {
+    int role;
+    char user[30], pass[30];
 
----
+    printf("\n===== LOGIN =====\n");
+    printf("1. Admin\n2. Student\nChoice: ");
+    scanf("%d", &role);
 
-## ✨ Key Features
+    printf("Username: ");
+    scanf("%s", user);
+    printf("Password: ");
+    scanf("%s", pass);
 
-### 👨‍💼 Admin Panel
+    if (role == 1 && strcmp(user, "admin") == 0 && strcmp(pass, "1234") == 0)
+        return 1;
 
-The administrator has full control over the system:
+    if (role == 2 && strcmp(user, "student") == 0 && strcmp(pass, "1234") == 0)
+        return 2;
 
-* ➕ Add new books
-* ❌ Delete books
-* 📋 View all books
-* 🔍 Search books by ID
-* 👤 Add users
-* 🗑 Delete users
-* 📄 View all users
-* 📚 Issue books to users
-* 🔁 Accept returned books
+    printf("Invalid login!\n");
+    exit(0);
 
----
+    return 0; 
+}
 
-### 🎓 Student Panel
+// ---------------- MAIN ----------------
+int main() {
+    int role = login();
+    int ch;
 
-Students have limited access:
+    while (1) {
 
-* 📖 View available books
-* 🔍 Search books
-* 📚 Issue a book
-* 🔁 Return a book
+        if (role == 1) {
+            printf("\n===== ADMIN PANEL =====\n");
+            printf("1. Add Book\n2. View Books\n3. Delete Book\n4. Search Book\n");
+            printf("5. Issue Book\n6. Return Book\n7. Add User\n8. View Users\n");
+            printf("9. Delete User\n10. Logout\n0. Exit\nChoice: ");
+        } else {
+            printf("\n===== STUDENT PANEL =====\n");
+            printf("1. View Books\n2. Search Book\n3. Issue Book\n");
+            printf("4. Return Book\n5. Logout\n0. Exit\nChoice: ");
+        }
 
----
+        scanf("%d", &ch);
 
-## 🧠 Concepts Used
+        switch (ch) {
+            case 1: addBook(); break;
+            case 2: displayBooks(); break;
+            case 3: (role==1)? deleteBook(): issueBook(); break;
+            case 4: (role==1)? searchBook(): returnBook(); break;
+            case 5: (role==1)? issueBook(): (role = login()); break;
+            case 6: if(role==1) returnBook(); break;
+            case 7: if(role==1) addUser(); break;
+            case 8: if(role==1) displayUsers(); break;
+            case 9: if(role==1) deleteUser(); break;
+            case 10: if(role==1) role = login(); break;
+            case 0: exit(0);
+            default: printf("Invalid choice!\n");
+        }
+    }
+}
 
-This project is built using core C programming concepts:
+// ---------------- ADD BOOK ----------------
+void addBook() {
+    FILE *fp = fopen("books.dat", "rb");
+    struct Book b, temp;
+    int found = 0;
 
-* **Structures (****`struct`****)** for Book and User data
-* **File Handling** (`fopen`, `fread`, `fwrite`)
-* **Binary Files** for efficient storage
-* **Conditional Statements & Loops**
-* **Function-based modular programming**
+    printf("Enter Book ID: ");
+    scanf("%d", &b.id);
 
----
+    if (fp) {
+        while (fread(&temp, sizeof(temp), 1, fp)) {
+            if (temp.id == b.id) {
+                found = 1;
+                break;
+            }
+        }
+        fclose(fp);
+    }
 
-## 🗂 File Structure
+    if (found) {
+        printf("Duplicate Book ID!\n");
+        return;
+    }
 
-```
-Library-Management-System/
-│
-├── main.c          # Main source code
-├── books.dat       # Stores book records (auto-created)
-├── users.dat       # Stores user records (auto-created)
-└── README.md       # Project documentation
-```
+    printf("Enter Book Name: ");
+    scanf(" %[^\n]", b.name);
+    printf("Enter Author Name: ");
+    scanf(" %[^\n]", b.author);
 
----
+    b.available = 1;
 
-## 🔐 Login System
+    fp = fopen("books.dat", "ab");
+    if (!fp) {
+        printf("File error!\n");
+        return;
+    }
 
-The system includes a simple login mechanism:
+    fwrite(&b, sizeof(b), 1, fp);
+    fclose(fp);
 
-### 👨‍💼 Admin Login
+    printf("Book added successfully!\n");
+}
 
-* Username: `admin`
-* Password: `1234`
+// ---------------- DISPLAY BOOKS ----------------
+void displayBooks() {
+    FILE *fp = fopen("books.dat", "rb");
+    struct Book b;
 
-### 🎓 Student Login
+    if (!fp) {
+        printf("No books available!\n");
+        return;
+    }
 
-* Username: `student`
-* Password: `1234`
+    printf("\n--- Book List ---\n");
 
----
+    while (fread(&b, sizeof(b), 1, fp)) {
+        printf("ID: %d | %s | %s | %s\n",
+               b.id, b.name, b.author,
+               b.available ? "Available" : "Issued");
+    }
 
-## ⚙️ How to Compile & Run
+    fclose(fp);
+}
 
-### 🖥 Using GCC Compiler
+// ---------------- SEARCH BOOK ----------------
+void searchBook() {
+    FILE *fp = fopen("books.dat", "rb");
+    struct Book b;
+    int id, found = 0;
 
-1. Compile the program:
+    if (!fp) {
+        printf("No books found!\n");
+        return;
+    }
 
-   ```
-   gcc main.c -o library
-   ```
+    printf("Enter Book ID: ");
+    scanf("%d", &id);
 
-2. Run the program:
+    while (fread(&b, sizeof(b), 1, fp)) {
+        if (b.id == id) {
+            printf("Found: %s by %s (%s)\n",
+                   b.name, b.author,
+                   b.available ? "Available" : "Issued");
+            found = 1;
+            break;
+        }
+    }
 
-   ```
-   ./library
-   ```
+    if (!found)
+        printf("Book not found!\n");
 
----
+    fclose(fp);
+}
 
-## 🔄 System Workflow
+// ---------------- DELETE BOOK ----------------
+void deleteBook() {
+    FILE *fp = fopen("books.dat", "rb");
+    FILE *temp = fopen("temp.dat", "wb");
+    struct Book b;
+    int id, found = 0;
 
-### 📚 Book Issue Process
+    if (!fp || !temp) {
+        printf("File error!\n");
+        return;
+    }
 
-1. Enter Book ID
-2. Enter User ID
-3. System checks:
+    printf("Enter Book ID to delete: ");
+    scanf("%d", &id);
 
-   * Book availability
-   * User eligibility
-4. Set due date (in days)
-5. Book is issued
+    while (fread(&b, sizeof(b), 1, fp)) {
+        if (b.id == id) {
+            found = 1;
+            continue;
+        }
+        fwrite(&b, sizeof(b), 1, temp);
+    }
 
----
+    fclose(fp);
+    fclose(temp);
 
-### 🔁 Book Return Process
+    remove("books.dat");
+    rename("temp.dat", "books.dat");
 
-1. Enter User ID
-2. Enter Book ID
-3. Enter number of days taken
-4. System checks:
+    printf(found ? "Book deleted!\n" : "Book not found!\n");
+}
 
-   * If returned late → ⚠ OVERDUE alert
-   * Otherwise → ✅ On-time return
+// ---------------- ADD USER ----------------
+void addUser() {
+    FILE *fp = fopen("users.dat", "rb");
+    struct User u, temp;
+    int found = 0;
 
----
+    printf("Enter User ID: ");
+    scanf("%d", &u.userId);
 
-## ⚠️ Rules & Constraints
+    if (fp) {
+        while (fread(&temp, sizeof(temp), 1, fp)) {
+            if (temp.userId == u.userId) {
+                found = 1;
+                break;
+            }
+        }
+        fclose(fp);
+    }
 
-* ❌ Duplicate Book IDs are not allowed
-* ❌ Duplicate User IDs are not allowed
-* 👤 One user can issue only **one book at a time**
-* 📚 A book must be **available** to be issued
-* 🔁 Only issued books can be returned
+    if (found) {
+        printf("User ID already exists!\n");
+        return;
+    }
 
----
+    printf("Enter Name: ");
+    scanf(" %[^\n]", u.name);
 
-## 💾 Data Storage Details
+    u.issuedBookId = -1;
+    u.dueDate = 0;
 
-* All records are stored in **binary format**
-* Files used:
+    fp = fopen("users.dat", "ab");
+    if (!fp) {
+        printf("File error!\n");
+        return;
+    }
 
-  * `books.dat`
-  * `users.dat`
-* Data remains saved even after closing the program
+    fwrite(&u, sizeof(u), 1, fp);
+    fclose(fp);
 
----
+    printf("User registered successfully!\n");
+}
 
-## 📸 Sample Output (Console)
+// ---------------- DISPLAY USERS ----------------
+void displayUsers() {
+    FILE *fp = fopen("users.dat", "rb");
+    struct User u;
 
-```
-===== LOGIN =====
-1. Admin
-2. Student
+    if (!fp) {
+        printf("No users found!\n");
+        return;
+    }
 
-===== ADMIN PANEL =====
-1. Add Book
-2. View Books
-3. Delete Book
-...
-```
+    printf("\n--- User List ---\n");
 
----
+    while (fread(&u, sizeof(u), 1, fp)) {
+        printf("ID: %d | %s | Issued Book: %d\n",
+               u.userId, u.name, u.issuedBookId);
+    }
 
-## 🧑‍💻 Author
+    fclose(fp);
+}
 
-**Srimahavignesh**
+// ---------------- DELETE USER ----------------
+void deleteUser() {
+    FILE *fp = fopen("users.dat", "rb");
+    FILE *temp = fopen("temp.dat", "wb");
+    struct User u;
+    int id, found = 0;
 
----
+    if (!fp || !temp) {
+        printf("File error!\n");
+        return;
+    }
 
-## 📌 Conclusion
+    printf("Enter User ID to delete: ");
+    scanf("%d", &id);
 
-This project is a great beginner-friendly implementation of a **real-world system using C programming**.
-It strengthens understanding of **file handling, data structures, and system logic design**.
+    while (fread(&u, sizeof(u), 1, fp)) {
+        if (u.userId == id) {
+            found = 1;
+            continue;
+        }
+        fwrite(&u, sizeof(u), 1, temp);
+    }
 
----
+    fclose(fp);
+    fclose(temp);
+
+    remove("users.dat");
+    rename("temp.dat", "users.dat");
+
+    printf(found ? "User deleted!\n" : "User not found!\n");
+}
+// ---------------- ISSUE BOOK ----------------
+void issueBook() {
+    FILE *fb = fopen("books.dat", "rb+");
+    FILE *fu = fopen("users.dat", "rb+");
+
+    if (fb == NULL || fu == NULL) {
+        printf("File error!\n");
+        return;
+    }
+
+    struct Book b;
+    struct User u;
+    int bid, uid;
+    long bookPos = -1, userPos = -1;
+
+    printf("Enter Book ID: ");
+    scanf("%d", &bid);
+
+    printf("Enter User ID: ");
+    scanf("%d", &uid);
+
+    rewind(fb);
+    rewind(fu);
+
+    // -------- Find Book --------
+    while (fread(&b, sizeof(b), 1, fb)) {
+        if (b.id == bid) {
+            if (b.available == 1) {
+                bookPos = ftell(fb) - sizeof(b);
+            } else {
+                printf("Book is already issued!\n");
+                fclose(fb);
+                fclose(fu);
+                return;
+            }
+            break;
+        }
+    }
+
+    // -------- Find User --------
+    while (fread(&u, sizeof(u), 1, fu)) {
+        if (u.userId == uid) {
+            if (u.issuedBookId == -1) {
+                userPos = ftell(fu) - sizeof(u);
+            } else {
+                printf("User already has a book!\n");
+                fclose(fb);
+                fclose(fu);
+                return;
+            }
+            break;
+        }
+    }
+
+    // -------- Validation --------
+    if (bookPos == -1) {
+        printf("Book not found!\n");
+        fclose(fb);
+        fclose(fu);
+        return;
+    }
+
+    if (userPos == -1) {
+        printf("User not found!\n");
+        fclose(fb);
+        fclose(fu);
+        return;
+    }
+
+    // -------- Update Book --------
+    fseek(fb, bookPos, SEEK_SET);
+    b.available = 0;
+    fwrite(&b, sizeof(b), 1, fb);
+
+    // -------- Update User --------
+    fseek(fu, userPos, SEEK_SET);
+    u.issuedBookId = bid;
+
+    printf("Enter Due Date (in days): ");
+    scanf("%d", &u.dueDate);
+
+    fwrite(&u, sizeof(u), 1, fu);
+
+    printf("Book issued successfully!\n");
+
+    fclose(fb);
+    fclose(fu);
+}
+
+// ---------------- RETURN BOOK ----------------
+void returnBook() {
+    FILE *fb = fopen("books.dat", "rb+");
+    FILE *fu = fopen("users.dat", "rb+");
+
+    if (fb == NULL || fu == NULL) {
+        printf("File error!\n");
+        return;
+    }
+
+    struct Book b;
+    struct User u;
+    int uid, bid;
+    long bookPos = -1, userPos = -1;
+
+    printf("Enter User ID: ");
+    scanf("%d", &uid);
+
+    printf("Enter Book ID: ");
+    scanf("%d", &bid);
+
+    rewind(fb);
+    rewind(fu);
+
+    // -------- Find User --------
+    while (fread(&u, sizeof(u), 1, fu)) {
+        if (u.userId == uid) {
+            userPos = ftell(fu) - sizeof(u);
+            break;
+        }
+    }
+
+    if (userPos == -1) {
+        printf("User not found!\n");
+        fclose(fb);
+        fclose(fu);
+        return;
+    }
+
+    // Check if user has this book
+    if (u.issuedBookId != bid) {
+        printf("This book was not issued to this user!\n");
+        fclose(fb);
+        fclose(fu);
+        return;
+    }
+
+    // -------- Find Book --------
+    rewind(fb);  // IMPORTANT FIX
+    while (fread(&b, sizeof(b), 1, fb)) {
+        if (b.id == bid) {
+            bookPos = ftell(fb) - sizeof(b);
+            break;
+        }
+    }
+
+    if (bookPos == -1) {
+        printf("Book not found!\n");
+        fclose(fb);
+        fclose(fu);
+        return;
+    }
+
+    // -------- Overdue Check --------
+    int returnDays;
+    printf("Enter days taken to return: ");
+    scanf("%d", &returnDays);
+
+    if (returnDays > u.dueDate) {
+        printf("\n⚠ OVERDUE!\n");
+        printf("Book returned late!\n");
+    } else {
+        printf("Returned on time.\n");
+    }
+
+    // -------- Update Book --------
+    fseek(fb, bookPos, SEEK_SET);
+    b.available = 1;
+    fwrite(&b, sizeof(b), 1, fb);
+
+    // -------- Update User --------
+    fseek(fu, userPos, SEEK_SET);
+    u.issuedBookId = -1;
+    u.dueDate = 0;
+    fwrite(&u, sizeof(u), 1, fu);
+
+    printf("Book returned successfully!\n");
+
+    fclose(fb);
+    fclose(fu);
+}
